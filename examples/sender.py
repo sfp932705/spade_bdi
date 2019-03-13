@@ -1,5 +1,6 @@
 from spade_bdi.bdi import BDIAgent
-a = BDIAgent("BDIAgent@localhost", "bditest", "plan.asl")
+
+a = BDIAgent("BDIAgent@localhost", "bditest", "sender.asl")
 a.start()
 
 import time

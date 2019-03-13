@@ -39,10 +39,9 @@ class BDIAgent(Agent):
                     return
                 ilf_type = ilf.functor
                 mdata = {"performative": "BDI",
-                         "ilf_type": ilf_type,
-                         "message": term.args[2]}
-                # Optional body
-                body = json.dumps({})
+                         "ilf_type": ilf_type, }
+                body = json.dumps({"functor": str(term.args[2].functor),
+                                   "args": str(term.args[2].args)})
                 msg = Message(to=receiver, body=body, metadata=mdata)
                 self.agent.submit(self.send(msg))
                 print("SENT!!!")
@@ -90,7 +89,7 @@ class BDIAgent(Agent):
                                 pyson.runtime.Intention())
 
         def get_belief(self, key):
-            """Get an existing agent's belief. The first belief matching 
+            """Get an existing agent's belief. The first belief matching
             <key> is returned """
             key = str(key)
             for beliefs in self.bdi_agent.beliefs:
@@ -158,12 +157,13 @@ class BDIAgent(Agent):
                     raise pyson.PysonError(
                         "unknown illocutionary force: %s" % ilf_type)
                 intention = pyson.runtime.Intention()
-                message = pyson.freeze(mdata["message"], intention.scope, {})
+                message = pyson.Literal(
+                    received["functor"], tuple([received["args"]]))
+                message = pyson.freeze(message, intention.scope, {})
                 tagged_message = message.with_annotation(
-                    pyson.Literal("source", (pyson.Literal(self.bdi_agent.name), )))
+                    pyson.Literal("source", (pyson.Literal(str(msg.sender)), )))
                 self.bdi_agent.call(trigger, goal_type,
                                     tagged_message, intention)
-                # print("RECEIVED\n", received)
             self.bdi_agent.step()
 
         async def on_end(self):
