@@ -22,14 +22,16 @@ class BDIAgent(Agent):
 
     def add_behaviour(self, behaviour, template=None):
         # print("OVERRIDEN")
-        self.bdi = behaviour
+        if type(behaviour) == self.BDIBehaviour:
+            self.bdi = behaviour
         super().add_behaviour(behaviour, template)
 
     def __init__(self, jid, password, asl, *args, **kwargs):
         self.asl_file = asl
+        # print("instantiated")
         super().__init__(jid, password, *args, **kwargs)
 
-    class BDIBehaviour(CyclicBehaviour, metaclass=ABCMeta):
+    class BDIBehaviour(CyclicBehaviour):
         def add_actions(self):
             @self.actions.add(".send", 3)
             def _send(agent, term, intention):
@@ -61,12 +63,14 @@ class BDIAgent(Agent):
             def _literal_function(x):
                 return x
 
-        # def set_belief(self, agent, term, intention):
         def set_belief(self, name, *args):
             """Set an agent's belief. If it already exists, updates it."""
             new_args = ()
             for x in args:
-                new_args += (pyson.Literal(x),)
+                if type(x) == str:
+                    new_args += (pyson.Literal(x),)
+                else:
+                    new_args += (x,)
             term = pyson.Literal(name, tuple(new_args), PERCEPT_TAG)
             found = False
             for belief in list(self.bdi_agent.beliefs[term.literal_group()]):
@@ -83,44 +87,61 @@ class BDIAgent(Agent):
             """Remove an existing agent's belief."""
             new_args = ()
             for x in args:
-                new_args += (pyson.Literal(x),)
+                if type(x) == str:
+                    new_args += (pyson.Literal(x),)
+                else:
+                    new_args += (x,)
             term = pyson.Literal(name, tuple(new_args), PERCEPT_TAG)
             self.bdi_agent.call(pyson.Trigger.removal, pyson.GoalType.belief, term,
                                 pyson.runtime.Intention())
 
-        def get_belief(self, key):
-            """Get an existing agent's belief. The first belief matching
-            <key> is returned """
+        def get_belief(self, key, pyson_format=False):
+            """Get an agent's existing belief. The first belief matching
+            <key> is returned. Keep <pyson_format> False to strip pyson 
+            formatting."""
             key = str(key)
             for beliefs in self.bdi_agent.beliefs:
                 if beliefs[0] == key:
                     raw_belief = (
                         str(list(self.bdi_agent.beliefs[beliefs])[0]))
-                    if '")[source' in raw_belief:
-                        raw_belief = raw_belief.split('[')[0].replace('"', '')
+                    if ')[source' in raw_belief and not pyson_format:
+                        raw_belief = raw_belief.split(
+                            '[')[0].replace('"', '')
                     belief = raw_belief
-                    break
-            return belief
+                    return belief
+            return None
 
-        def get_beliefs(self):
-            """Get agent's beliefs."""
+        def get_belief_value(self, key):
+            """Get an agent's existing value or values of the <key> belief. The first belief matching
+            <key> is returned"""
+            belief = self.get_belief(key)
+            if belief:
+                return tuple(belief.split('(')[1].split(')')[0].split(','))
+            else:
+                return None
+
+        def get_beliefs(self, pyson_format=False):
+            """Get agent's beliefs.Keep <pyson_format> False to strip pyson 
+            formatting."""
             belief_list = []
             for beliefs in self.bdi_agent.beliefs:
                 try:
                     raw_belief = (
                         str(list(self.bdi_agent.beliefs[beliefs])[0]))
-                    if ')[source(' in raw_belief:
+                    if ')[source(' in raw_belief and not pyson_format:
                         raw_belief = raw_belief.split('[')[0].replace('"', '')
                     belief_list.append(raw_belief)
                 except IndexError:
                     pass
             return belief_list
 
-        def print_beliefs(self):
+        def print_beliefs(self, pyson_format=False):
+            """Print agent's beliefs.Keep <pyson_format> False to strip pyson 
+            formatting."""
             print("PRINTING BELIEFS")
             for beliefs in self.bdi_agent.beliefs.values():
                 for belief in beliefs:
-                    if ')[source(' in str(belief):
+                    if ')[source(' in str(belief) and not pyson_format:
                         belief = str(belief).split('[')[0].replace('"', '')
                     print(belief)
 
