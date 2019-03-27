@@ -6,7 +6,7 @@ from spade.agent import Agent
 
 
 class ExampleAgent(BDIAgent):
-    def setup(self):
+    async def setup(self):
         template = Template(metadata={"performative": "BDI"})
         self.add_behaviour(self.BDIBehaviour(), template)
         template = Template(metadata={"performative": "B1"})
@@ -38,8 +38,8 @@ class ExampleAgent(BDIAgent):
             tipo = self.agent.bdi.get_belief_value("tipo")[0]
             if tipo == 'inc':
                 self.agent.bdi.set_belief('tipo', 'dec')
-            # else:
-            #     self.agent.bdi.set_belief('tipo', 'inc')
+            else:
+                self.agent.bdi.set_belief('tipo', 'inc')
 
 
 a = ExampleAgent("Agent@localhost", "bditest", "ejemplo.asl")

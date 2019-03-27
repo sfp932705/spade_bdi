@@ -16,7 +16,7 @@ PERCEPT_TAG = frozenset(
 
 
 class BDIAgent(Agent):
-    def setup(self):
+    async def setup(self):
         template = Template(metadata={"performative": "BDI"})
         self.add_behaviour(self.BDIBehaviour(), template)
 
@@ -24,6 +24,7 @@ class BDIAgent(Agent):
         # print("OVERRIDEN")
         if type(behaviour) == self.BDIBehaviour:
             self.bdi = behaviour
+            # print("ADDING BDI BEHAVIOUR")
         super().add_behaviour(behaviour, template)
 
     def __init__(self, jid, password, asl, *args, **kwargs):
@@ -46,7 +47,7 @@ class BDIAgent(Agent):
                                    "args": str(term.args[2].args)})
                 msg = Message(to=receiver, body=body, metadata=mdata)
                 self.agent.submit(self.send(msg))
-                print("SENT!!!")
+                # print("SENT!!!")
                 yield
 
             @self.actions.add(".custom_action", 1)
@@ -155,6 +156,7 @@ class BDIAgent(Agent):
             with open(self.agent.asl_file) as source:
                 self.bdi_agent = self.env.build_agent(
                     source, self.actions)
+            self.bdi_agent.name = self.agent.jid
 
         async def run(self):
             """
