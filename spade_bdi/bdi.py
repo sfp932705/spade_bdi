@@ -10,6 +10,7 @@ from spade.agent import Agent
 from spade.template import Template
 from spade.message import Message
 import json
+from ast import literal_eval
 
 PERCEPT_TAG = frozenset(
     [pyson.Literal("source", (pyson.Literal("percept"), ))])
@@ -98,7 +99,7 @@ class BDIAgent(Agent):
 
         def get_belief(self, key, pyson_format=False):
             """Get an agent's existing belief. The first belief matching
-            <key> is returned. Keep <pyson_format> False to strip pyson 
+            <key> is returned. Keep <pyson_format> False to strip pyson
             formatting."""
             key = str(key)
             for beliefs in self.bdi_agent.beliefs:
@@ -122,7 +123,7 @@ class BDIAgent(Agent):
                 return None
 
         def get_beliefs(self, pyson_format=False):
-            """Get agent's beliefs.Keep <pyson_format> False to strip pyson 
+            """Get agent's beliefs.Keep <pyson_format> False to strip pyson
             formatting."""
             belief_list = []
             for beliefs in self.bdi_agent.beliefs:
@@ -137,7 +138,7 @@ class BDIAgent(Agent):
             return belief_list
 
         def print_beliefs(self, pyson_format=False):
-            """Print agent's beliefs.Keep <pyson_format> False to strip pyson 
+            """Print agent's beliefs.Keep <pyson_format> False to strip pyson
             formatting."""
             print("PRINTING BELIEFS")
             for beliefs in self.bdi_agent.beliefs.values():
@@ -180,8 +181,13 @@ class BDIAgent(Agent):
                     raise pyson.PysonError(
                         "unknown illocutionary force: %s" % ilf_type)
                 intention = pyson.runtime.Intention()
-                message = pyson.Literal(
-                    received["functor"], tuple([received["args"]]))
+                args = literal_eval(received["args"])
+
+                if args != tuple():
+                    message = pyson.Literal(
+                        received["functor"], args)
+                else:
+                    message = pyson.Literal(received["functor"])
                 message = pyson.freeze(message, intention.scope, {})
                 tagged_message = message.with_annotation(
                     pyson.Literal("source", (pyson.Literal(str(msg.sender)), )))
