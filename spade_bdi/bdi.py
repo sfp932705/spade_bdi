@@ -22,20 +22,34 @@ class BDIAgent(Agent):
         self.add_behaviour(self.BDIBehaviour(), template)
 
     def add_behaviour(self, behaviour, template=None):
-        # print("OVERRIDEN")
         if type(behaviour) == self.BDIBehaviour:
             self.bdi = behaviour
-            # print("ADDING BDI BEHAVIOUR")
         super().add_behaviour(behaviour, template)
 
-    def __init__(self, jid, password, asl, *args, **kwargs):
+    def set_asl(self, asl):
         self.asl_file = asl
-        # print("instantiated")
+        if self.asl_file == None:
+            self.bdi_enabled = False
+        else:
+            with open(self.asl_file) as source:
+                self.bdi_agent = self.bdi_env.build_agent(
+                    source, self.bdi_actions)
+            self.bdi_agent.name = self.jid
+            self.bdi_enabled = True
+
+    def set_env(self):
+        self.bdi_env = pyson.runtime.Environment()
+        self.bdi_actions = pyson.Actions(pyson.stdlib.actions)
+        self.bdi.add_actions()
+
+    def __init__(self, jid, password, asl=None, *args, **kwargs):
+        self.asl_file = asl
+        self.bdi_enabled = False
         super().__init__(jid, password, *args, **kwargs)
 
     class BDIBehaviour(CyclicBehaviour):
         def add_actions(self):
-            @self.actions.add(".send", 3)
+            @self.agent.bdi_actions.add(".send", 3)
             def _send(agent, term, intention):
                 receiver = pyson.grounded(term.args[0], intention.scope)
                 ilf = pyson.grounded(term.args[1], intention.scope)
@@ -48,20 +62,19 @@ class BDIAgent(Agent):
                                    "args": str(term.args[2].args)})
                 msg = Message(to=receiver, body=body, metadata=mdata)
                 self.agent.submit(self.send(msg))
-                # print("SENT!!!")
                 yield
 
-            @self.actions.add(".custom_action", 1)
+            @self.agent.bdi_actions.add(".custom_action", 1)
             def _custom_action(agent, term, intention):
                 arg_0 = pyson.grounded(term.args[0], intention.scope)
                 print(arg_0)
                 yield
 
-            @self.actions.add_function(".a_function", (int,))
+            @self.agent.bdi_actions.add_function(".a_function", (int,))
             def _a_function(x):
                 return x**4
 
-            @self.actions.add_function("literal_function", (pyson.Literal,))
+            @self.agent.bdi_actions.add_function("literal_function", (pyson.Literal,))
             def _literal_function(x):
                 return x
 
@@ -75,15 +88,15 @@ class BDIAgent(Agent):
                     new_args += (x,)
             term = pyson.Literal(name, tuple(new_args), PERCEPT_TAG)
             found = False
-            for belief in list(self.bdi_agent.beliefs[term.literal_group()]):
+            for belief in list(self.agent.bdi_agent.beliefs[term.literal_group()]):
                 if pyson.unifies(term, belief):
                     found = True
                 else:
-                    self.bdi_agent.call(pyson.Trigger.removal, pyson.GoalType.belief, belief,
-                                        pyson.runtime.Intention())
+                    self.agent.bdi_agent.call(pyson.Trigger.removal, pyson.GoalType.belief, belief,
+                                              pyson.runtime.Intention())
             if not found:
-                self.bdi_agent.call(pyson.Trigger.addition, pyson.GoalType.belief, term,
-                                    pyson.runtime.Intention())
+                self.agent.bdi_agent.call(pyson.Trigger.addition, pyson.GoalType.belief, term,
+                                          pyson.runtime.Intention())
 
         def remove_belief(self, name, *args):
             """Remove an existing agent's belief."""
@@ -94,18 +107,18 @@ class BDIAgent(Agent):
                 else:
                     new_args += (x,)
             term = pyson.Literal(name, tuple(new_args), PERCEPT_TAG)
-            self.bdi_agent.call(pyson.Trigger.removal, pyson.GoalType.belief, term,
-                                pyson.runtime.Intention())
+            self.agent.bdi_agent.call(pyson.Trigger.removal, pyson.GoalType.belief, term,
+                                      pyson.runtime.Intention())
 
         def get_belief(self, key, pyson_format=False):
             """Get an agent's existing belief. The first belief matching
             <key> is returned. Keep <pyson_format> False to strip pyson
             formatting."""
             key = str(key)
-            for beliefs in self.bdi_agent.beliefs:
+            for beliefs in self.agent.bdi_agent.beliefs:
                 if beliefs[0] == key:
                     raw_belief = (
-                        str(list(self.bdi_agent.beliefs[beliefs])[0]))
+                        str(list(self.agent.bdi_agent.beliefs[beliefs])[0]))
                     if ')[source' in raw_belief and not pyson_format:
                         raw_belief = raw_belief.split(
                             '[')[0].replace('"', '')
@@ -126,10 +139,10 @@ class BDIAgent(Agent):
             """Get agent's beliefs.Keep <pyson_format> False to strip pyson
             formatting."""
             belief_list = []
-            for beliefs in self.bdi_agent.beliefs:
+            for beliefs in self.agent.bdi_agent.beliefs:
                 try:
                     raw_belief = (
-                        str(list(self.bdi_agent.beliefs[beliefs])[0]))
+                        str(list(self.agent.bdi_agent.beliefs[beliefs])[0]))
                     if ')[source(' in raw_belief and not pyson_format:
                         raw_belief = raw_belief.split('[')[0].replace('"', '')
                     belief_list.append(raw_belief)
@@ -141,7 +154,7 @@ class BDIAgent(Agent):
             """Print agent's beliefs.Keep <pyson_format> False to strip pyson
             formatting."""
             print("PRINTING BELIEFS")
-            for beliefs in self.bdi_agent.beliefs.values():
+            for beliefs in self.agent.bdi_agent.beliefs.values():
                 for belief in beliefs:
                     if ')[source(' in str(belief) and not pyson_format:
                         belief = str(belief).split('[')[0].replace('"', '')
@@ -151,49 +164,48 @@ class BDIAgent(Agent):
             """
             Coroutine called before the behaviour is started.
             """
-            self.env = pyson.runtime.Environment()
-            self.actions = pyson.Actions(pyson.stdlib.actions)
-            self.add_actions()
-            with open(self.agent.asl_file) as source:
-                self.bdi_agent = self.env.build_agent(
-                    source, self.actions)
-            self.bdi_agent.name = self.agent.jid
+            self.agent.set_env()
+            if self.agent.asl_file:
+                self.agent.set_asl(self.agent.asl_file)
+            else:
+                print("No ASL specified.")
 
         async def run(self):
             """
             Coroutine run cyclic.
             """
-            msg = await self.receive(timeout=0.1)
-            if msg:
-                received = json.loads(msg.body)
-                mdata = msg.metadata
-                ilf_type = mdata["ilf_type"]
-                if ilf_type == "tell":
-                    goal_type = pyson.GoalType.belief
-                    trigger = pyson.Trigger.addition
-                elif ilf_type == "untell":
-                    goal_type = pyson.GoalType.belief
-                    trigger = pyson.Trigger.removal
-                elif ilf_type == "achieve":
-                    goal_type = pyson.GoalType.achievement
-                    trigger = pyson.Trigger.addition
-                else:
-                    raise pyson.PysonError(
-                        "unknown illocutionary force: %s" % ilf_type)
-                intention = pyson.runtime.Intention()
-                args = literal_eval(received["args"])
+            if self.agent.bdi_enabled:
+                msg = await self.receive(timeout=0.1)
+                if msg:
+                    received = json.loads(msg.body)
+                    mdata = msg.metadata
+                    ilf_type = mdata["ilf_type"]
+                    if ilf_type == "tell":
+                        goal_type = pyson.GoalType.belief
+                        trigger = pyson.Trigger.addition
+                    elif ilf_type == "untell":
+                        goal_type = pyson.GoalType.belief
+                        trigger = pyson.Trigger.removal
+                    elif ilf_type == "achieve":
+                        goal_type = pyson.GoalType.achievement
+                        trigger = pyson.Trigger.addition
+                    else:
+                        raise pyson.PysonError(
+                            "unknown illocutionary force: %s" % ilf_type)
+                    intention = pyson.runtime.Intention()
+                    args = literal_eval(received["args"])
 
-                if args != tuple():
-                    message = pyson.Literal(
-                        received["functor"], args)
-                else:
-                    message = pyson.Literal(received["functor"])
-                message = pyson.freeze(message, intention.scope, {})
-                tagged_message = message.with_annotation(
-                    pyson.Literal("source", (pyson.Literal(str(msg.sender)), )))
-                self.bdi_agent.call(trigger, goal_type,
-                                    tagged_message, intention)
-            self.bdi_agent.step()
+                    if args != tuple():
+                        message = pyson.Literal(
+                            received["functor"], args)
+                    else:
+                        message = pyson.Literal(received["functor"])
+                    message = pyson.freeze(message, intention.scope, {})
+                    tagged_message = message.with_annotation(
+                        pyson.Literal("source", (pyson.Literal(str(msg.sender)), )))
+                    self.agent.bdi_agent.call(trigger, goal_type,
+                                              tagged_message, intention)
+                self.agent.bdi_agent.step()
 
         async def on_end(self):
             """

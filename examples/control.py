@@ -25,8 +25,11 @@ class BossAgent(BDIAgent):
 
 b = BDIAgent("slave_1@localhost", "bdisimple", "slave.asl")
 b.start()
-c = BDIAgent("slave_2@localhost", "bdisimple3", "slave.asl")
+c = BDIAgent("slave_2@localhost", "bdisimple3")
 c.start()
 a = BossAgent("Boss@localhost", "bdiboss", "boss.asl")
 a.start()
-print("started")
+import time
+time.sleep(5)
+print("Enabling BDI for slave2")
+c.set_asl("slave.asl")
