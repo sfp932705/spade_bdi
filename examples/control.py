@@ -16,20 +16,28 @@ class BossAgent(BDIAgent):
 
     class Modify(PeriodicBehaviour):
         async def run(self):
-            tipo = self.agent.bdi.get_belief_value("type")[0]
-            if tipo == 'inc':
-                self.agent.bdi.set_belief('type', 'dec')
-            else:
-                self.agent.bdi.set_belief('type', 'inc')
+            if self.agent.bdi_enabled:
+                tipo = self.agent.bdi.get_belief_value("type")[0]
+                if tipo == 'inc':
+                    self.agent.bdi.set_belief('type', 'dec')
+                else:
+                    self.agent.bdi.set_belief('type', 'inc')
 
 
 b = BDIAgent("slave_1@localhost", "bdisimple", "slave.asl")
-b.start()
+future = b.start()
+future.result()
 c = BDIAgent("slave_2@localhost", "bdisimple3")
-c.start()
-a = BossAgent("Boss@localhost", "bdiboss", "boss.asl")
-a.start()
+future = c.start()
+future.result()
+a = BossAgent("Boss@localhost", "bdiboss")
+future = a.start()
+future.result()
+a.set_asl("boss.asl")
 import time
 time.sleep(5)
 print("Enabling BDI for slave2")
 c.set_asl("slave.asl")
+time.sleep(5)
+print("Disabling BDI for slave2")
+c.set_asl(None)

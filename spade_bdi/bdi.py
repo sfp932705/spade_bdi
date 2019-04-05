@@ -1,16 +1,15 @@
 # -*- coding: utf-8 -*-
-from abc import ABCMeta, abstractmethod
 from spade.behaviour import CyclicBehaviour
 import pyson
 import pyson.runtime
 import pyson.stdlib
-import os
 import asyncio
 from spade.agent import Agent
 from spade.template import Template
 from spade.message import Message
 import json
 from ast import literal_eval
+from loguru import logger
 
 PERCEPT_TAG = frozenset(
     [pyson.Literal("source", (pyson.Literal("percept"), ))])
@@ -168,7 +167,8 @@ class BDIAgent(Agent):
             if self.agent.asl_file:
                 self.agent.set_asl(self.agent.asl_file)
             else:
-                print("No ASL specified.")
+                logger.info(
+                    "Warning: no ASL specified for {}.".format(self.agent.jid))
 
         async def run(self):
             """
