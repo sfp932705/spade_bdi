@@ -22,7 +22,7 @@ class BDIAgent(Agent):
     async def setup(self):
         template = Template(metadata={"performative": "BDI"})
         self.add_behaviour(self.BDIBehaviour(), template)
-        super().setup()
+        await super().setup()
 
     def add_behaviour(self, behaviour, template=None):
         if type(behaviour) == self.BDIBehaviour:
