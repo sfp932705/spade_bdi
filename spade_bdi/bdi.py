@@ -27,6 +27,7 @@ class BDIAgent(Agent):
     def add_behaviour(self, behaviour, template=None):
         if type(behaviour) == self.BDIBehaviour:
             self.bdi = behaviour
+            self.set_env()
         super().add_behaviour(behaviour, template)
 
     def set_asl(self, asl):
@@ -43,7 +44,6 @@ class BDIAgent(Agent):
     def set_env(self):
         self.bdi_env = pyson.runtime.Environment()
         self.bdi_actions = pyson.Actions(pyson.stdlib.actions)
-        self.bdi.add_actions()
 
     def __init__(self, jid, password, asl=None, *args, **kwargs):
         self.asl_file = asl
@@ -167,7 +167,7 @@ class BDIAgent(Agent):
             """
             Coroutine called before the behaviour is started.
             """
-            self.agent.set_env()
+            self.add_actions()
             if self.agent.asl_file:
                 self.agent.set_asl(self.agent.asl_file)
             else:
