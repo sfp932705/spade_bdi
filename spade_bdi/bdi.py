@@ -22,6 +22,7 @@ class BDIAgent(Agent):
     async def setup(self):
         template = Template(metadata={"performative": "BDI"})
         self.add_behaviour(self.BDIBehaviour(), template)
+        super().setup()
 
     def add_behaviour(self, behaviour, template=None):
         if type(behaviour) == self.BDIBehaviour:
@@ -64,19 +65,6 @@ class BDIAgent(Agent):
                                    "args": str(term.args[2].args)})
                 msg = Message(to=receiver, body=body, metadata=mdata)
                 self.agent.submit(self.send(msg))
-                yield
-#
-
-            @self.agent.bdi_actions.add(".goto", 3)
-            def _goto(agent, term, intention):
-                """Sets the PyGomas destination. Expects args to be x,y,z"""
-                args = pyson.grounded(term.args, intention.scope)
-
-                absx = abs(args[0] - self.agent.movement.position.x)
-                absz = abs(args[2] - self.agent.movement.position.z)
-                if (absx < PRECISION_X) and (absz < PRECISION_Z):
-                    self.agent.movement.position.x = args[0]
-                    self.agent.movement.position.z = args[2]
                 yield
 
             @self.agent.bdi_actions.add(".custom_action", 1)
