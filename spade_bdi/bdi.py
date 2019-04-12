@@ -179,7 +179,7 @@ class BDIAgent(Agent):
             Coroutine run cyclic.
             """
             if self.agent.bdi_enabled:
-                msg = await self.receive(timeout=0.1)
+                msg = await self.receive(timeout=0)
                 if msg:
                     received = json.loads(msg.body)
                     mdata = msg.metadata
