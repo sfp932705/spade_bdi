@@ -3,6 +3,7 @@ import asyncio
 import json
 from ast import literal_eval
 from loguru import logger
+from collections import deque
 import pyson
 import pyson.runtime
 import pyson.stdlib
@@ -48,6 +49,7 @@ class BDIAgent(Agent):
     def __init__(self, jid, password, asl=None, *args, **kwargs):
         self.asl_file = asl
         self.bdi_enabled = False
+        self.bdi_intention_buffer = deque()
         super().__init__(jid, password, *args, **kwargs)
 
     class BDIBehaviour(CyclicBehaviour):
@@ -95,11 +97,15 @@ class BDIAgent(Agent):
                 if pyson.unifies(term, belief):
                     found = True
                 else:
-                    self.agent.bdi_agent.call(pyson.Trigger.removal, pyson.GoalType.belief, belief,
-                                              pyson.runtime.Intention())
+                    self.agent.bdi_intention_buffer.append((pyson.Trigger.removal, pyson.GoalType.belief, belief,
+                                                            pyson.runtime.Intention()))
+                    # self.agent.bdi_agent.call(pyson.Trigger.removal, pyson.GoalType.belief, belief,
+                    #                           pyson.runtime.Intention())
             if not found:
-                self.agent.bdi_agent.call(pyson.Trigger.addition, pyson.GoalType.belief, term,
-                                          pyson.runtime.Intention())
+                self.agent.bdi_intention_buffer.append((pyson.Trigger.addition, pyson.GoalType.belief, term,
+                                                        pyson.runtime.Intention()))
+                # self.agent.bdi_agent.call(pyson.Trigger.addition, pyson.GoalType.belief, term,
+                #                           pyson.runtime.Intention())
 
         def remove_belief(self, name, *args):
             """Remove an existing agent's belief."""
@@ -110,8 +116,10 @@ class BDIAgent(Agent):
                 else:
                     new_args += (x,)
             term = pyson.Literal(name, tuple(new_args), PERCEPT_TAG)
-            self.agent.bdi_agent.call(pyson.Trigger.removal, pyson.GoalType.belief, term,
-                                      pyson.runtime.Intention())
+            self.agent.bdi_intention_buffer.append((pyson.Trigger.removal, pyson.GoalType.belief, belief,
+                                                    pyson.runtime.Intention()))
+            # self.agent.bdi_agent.call(pyson.Trigger.removal, pyson.GoalType.belief, term,
+            #                           pyson.runtime.Intention())
 
         def get_belief(self, key, pyson_format=False):
             """Get an agent's existing belief. The first belief matching
@@ -207,9 +215,17 @@ class BDIAgent(Agent):
                     message = pyson.freeze(message, intention.scope, {})
                     tagged_message = message.with_annotation(
                         pyson.Literal("source", (pyson.Literal(str(msg.sender)), )))
-                    self.agent.bdi_agent.call(trigger, goal_type,
-                                              tagged_message, intention)
-                self.agent.bdi_agent.step()
+                    self.agent.bdi_intention_buffer.append((trigger, goal_type,
+                                                            tagged_message, intention))
+                    # self.agent.bdi_agent.call(trigger, goal_type,
+                    #                           tagged_message, intention)
+                if self.agent.bdi_intention_buffer:
+                    for i in self.agent.bdi_intention_buffer:
+                        self.agent.bdi_agent.call(i[0], i[1], i[2], i[3])
+                        self.agent.bdi_agent.step()
+                    self.agent.bdi_intention_buffer = deque()
+                else:
+                    self.agent.bdi_agent.step()
 
         async def on_end(self):
             """
