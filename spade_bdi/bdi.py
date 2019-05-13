@@ -15,8 +15,6 @@ from .ontology import X, Y, Z
 
 PERCEPT_TAG = frozenset(
     [pyson.Literal("source", (pyson.Literal("percept"), ))])
-PRECISION_Z = 0.5
-PRECISION_X = 0.5
 
 
 class BDIAgent(Agent):
@@ -31,16 +29,23 @@ class BDIAgent(Agent):
             self.set_env()
         super().add_behaviour(behaviour, template)
 
-    def set_asl(self, asl):
-        self.asl_file = asl
-        if self.asl_file == None:
+    def set_asl(self, asl_file=None):
+        if not asl_file:
             self.bdi_enabled = False
+            self.asl_file = None
         else:
-            with open(self.asl_file) as source:
-                self.bdi_agent = self.bdi_env.build_agent(
-                    source, self.bdi_actions)
-            self.bdi_agent.name = self.jid
-            self.bdi_enabled = True
+            try:
+                with open(asl_file) as source:
+                    self.bdi_agent = self.bdi_env.build_agent(
+                        source, self.bdi_actions)
+                self.bdi_agent.name = self.jid
+                self.bdi_enabled = True
+                self.asl_file = asl_file
+            except FileNotFoundError:
+                logger.info(
+                    "Warning: ASL specified for {} does not exist. Disabling BDI.".format(self.jid))
+                self.bdi_enabled = False
+                self.asl_file = None
 
     def set_env(self):
         self.bdi_env = pyson.runtime.Environment()
@@ -87,7 +92,7 @@ class BDIAgent(Agent):
             """Set an agent's belief. If it already exists, updates it."""
             new_args = ()
             for x in args:
-                if type(x) == str:
+                if type(x) == str: 
                     new_args += (pyson.Literal(x),)
                 else:
                     new_args += (x,)
@@ -116,7 +121,7 @@ class BDIAgent(Agent):
                 else:
                     new_args += (x,)
             term = pyson.Literal(name, tuple(new_args), PERCEPT_TAG)
-            self.agent.bdi_intention_buffer.append((pyson.Trigger.removal, pyson.GoalType.belief, belief,
+            self.agent.bdi_intention_buffer.append((pyson.Trigger.removal, pyson.GoalType.belief, term,
                                                     pyson.runtime.Intention()))
             # self.agent.bdi_agent.call(pyson.Trigger.removal, pyson.GoalType.belief, term,
             #                           pyson.runtime.Intention())

@@ -5,7 +5,7 @@ from datetime import datetime
 from spade.agent import Agent
 
 
-class BossAgent(BDIAgent):
+class MasterAgent(BDIAgent):
     async def setup(self):
         template = Template(metadata={"performative": "BDI"})
         self.add_behaviour(self.BDIBehaviour(), template)
@@ -30,10 +30,10 @@ future.result()
 c = BDIAgent("slave_2@localhost", "bdisimple3")
 future = c.start()
 future.result()
-a = BossAgent("Boss@localhost", "bdiboss")
+a = MasterAgent("master@localhost", "bdimaster")
 future = a.start()
 future.result()
-a.set_asl("boss.asl")
+a.set_asl("master.asl")
 import time
 time.sleep(5)
 print("Enabling BDI for slave2")

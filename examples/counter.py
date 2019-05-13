@@ -5,7 +5,7 @@ from datetime import datetime
 from spade.agent import Agent
 
 
-class ExampleAgent(BDIAgent):
+class CounterAgent(BDIAgent):
     async def setup(self):
         template = Template(metadata={"performative": "BDI"})
         self.add_behaviour(self.BDIBehaviour(), template)
@@ -42,7 +42,7 @@ class ExampleAgent(BDIAgent):
                 self.agent.bdi.set_belief('tipo', 'inc')
 
 
-a = ExampleAgent("Agent@localhost", "bditest", "ejemplo.asl")
+a = CounterAgent("counter@localhost", "bditest", "counter.asl")
 a.start()
 import time
 time.sleep(1)
