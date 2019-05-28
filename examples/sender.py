@@ -1,4 +1,4 @@
 from spade_bdi.bdi import BDIAgent
 
-a = BDIAgent("SenderAgent@localhost", "senderpasswd", "sender.asl")
+a = BDIAgent("BDISenderAgent@localhost", "senderpasswd", "sender.asl")
 a.start()

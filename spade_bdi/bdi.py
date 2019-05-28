@@ -11,7 +11,6 @@ from spade.behaviour import CyclicBehaviour
 from spade.agent import Agent
 from spade.template import Template
 from spade.message import Message
-from .ontology import X, Y, Z
 
 PERCEPT_TAG = frozenset(
     [pyson.Literal("source", (pyson.Literal("percept"), ))])
@@ -92,7 +91,7 @@ class BDIAgent(Agent):
             """Set an agent's belief. If it already exists, updates it."""
             new_args = ()
             for x in args:
-                if type(x) == str: 
+                if type(x) == str:
                     new_args += (pyson.Literal(x),)
                 else:
                     new_args += (x,)
@@ -225,10 +224,11 @@ class BDIAgent(Agent):
                     # self.agent.bdi_agent.call(trigger, goal_type,
                     #                           tagged_message, intention)
                 if self.agent.bdi_intention_buffer:
-                    for i in self.agent.bdi_intention_buffer:
+                    temp_intentions = deque(self.agent.bdi_intention_buffer)
+                    for i in temp_intentions:
                         self.agent.bdi_agent.call(i[0], i[1], i[2], i[3])
                         self.agent.bdi_agent.step()
-                    self.agent.bdi_intention_buffer = deque()
+                        self.agent.bdi_intention_buffer.popleft()
                 else:
                     self.agent.bdi_agent.step()
 

@@ -9,5 +9,5 @@ contador(0).
 +decrementar(Dec) <- 
   .print("decreasing");
   ?contador(X);
-  -+contador(X+1);
+  -+contador(X-1);
   -decrementar(_).
