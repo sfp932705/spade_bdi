@@ -67,8 +67,8 @@ class BDIAgent(Agent):
                 ilf_type = ilf.functor
                 mdata = {"performative": "BDI",
                          "ilf_type": ilf_type, }
-                body = json.dumps({"functor": str(term.args[2].functor),
-                                   "args": str(term.args[2].args)})
+                body = pyson.pyson_str(pyson.freeze(
+                    term.args[2], intention.scope, {}))
                 msg = Message(to=receiver, body=body, metadata=mdata)
                 self.agent.submit(self.send(msg))
                 yield
@@ -193,7 +193,6 @@ class BDIAgent(Agent):
             if self.agent.bdi_enabled:
                 msg = await self.receive(timeout=0)
                 if msg:
-                    received = json.loads(msg.body)
                     mdata = msg.metadata
                     ilf_type = mdata["ilf_type"]
                     if ilf_type == "tell":
@@ -208,15 +207,13 @@ class BDIAgent(Agent):
                     else:
                         raise pyson.PysonError(
                             "unknown illocutionary force: %s" % ilf_type)
-                    intention = pyson.runtime.Intention()
-                    args = literal_eval(received["args"])
 
-                    if args != tuple():
-                        message = pyson.Literal(
-                            received["functor"], args)
-                    else:
-                        message = pyson.Literal(received["functor"])
+                    intention = pyson.runtime.Intention()
+                    functor, args = await parse_literal(msg.body)
+
+                    message = pyson.Literal(functor, args)
                     message = pyson.freeze(message, intention.scope, {})
+
                     tagged_message = message.with_annotation(
                         pyson.Literal("source", (pyson.Literal(str(msg.sender)), )))
                     self.agent.bdi_intention_buffer.append((trigger, goal_type,
@@ -225,15 +222,30 @@ class BDIAgent(Agent):
                     #                           tagged_message, intention)
                 if self.agent.bdi_intention_buffer:
                     temp_intentions = deque(self.agent.bdi_intention_buffer)
-                    for i in temp_intentions:
-                        self.agent.bdi_agent.call(i[0], i[1], i[2], i[3])
+                    for trigger, goal_type, tagged_message, intention in temp_intentions:
+                        self.agent.bdi_agent.call(
+                            trigger, goal_type, tagged_message, intention)
                         self.agent.bdi_agent.step()
                         self.agent.bdi_intention_buffer.popleft()
                 else:
                     self.agent.bdi_agent.step()
 
-        async def on_end(self):
-            """
-            Coroutine called after the behaviour is done or killed.
-            """
-            pass
+
+async def parse_literal(msg):
+    functor = msg.split("(")[0]
+    if "(" in msg:
+        args = msg.split("(")[1]
+        args = args.split(")")[0]
+        args = literal_eval(args)
+        if not isinstance(args, tuple):
+            args = (args,)
+        new_args = []
+        for arg in args:
+            if isinstance(arg, list):
+                arg = tuple(arg)
+            new_args.append(arg)
+        args = tuple(new_args)
+
+    else:
+        args = None
+    return functor, args
