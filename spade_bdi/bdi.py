@@ -103,13 +103,9 @@ class BDIAgent(Agent):
                 else:
                     self.agent.bdi_intention_buffer.append((pyson.Trigger.removal, pyson.GoalType.belief, belief,
                                                             pyson.runtime.Intention()))
-                    # self.agent.bdi_agent.call(pyson.Trigger.removal, pyson.GoalType.belief, belief,
-                    #                           pyson.runtime.Intention())
             if not found:
                 self.agent.bdi_intention_buffer.append((pyson.Trigger.addition, pyson.GoalType.belief, term,
                                                         pyson.runtime.Intention()))
-                # self.agent.bdi_agent.call(pyson.Trigger.addition, pyson.GoalType.belief, term,
-                #                           pyson.runtime.Intention())
 
         def remove_belief(self, name, *args):
             """Remove an existing agent's belief."""
@@ -122,19 +118,16 @@ class BDIAgent(Agent):
             term = pyson.Literal(name, tuple(new_args), PERCEPT_TAG)
             self.agent.bdi_intention_buffer.append((pyson.Trigger.removal, pyson.GoalType.belief, term,
                                                     pyson.runtime.Intention()))
-            # self.agent.bdi_agent.call(pyson.Trigger.removal, pyson.GoalType.belief, term,
-            #                           pyson.runtime.Intention())
 
-        def get_belief(self, key, pyson_format=False):
+        def get_belief(self, key, source=False):
             """Get an agent's existing belief. The first belief matching
-            <key> is returned. Keep <pyson_format> False to strip pyson
-            formatting."""
+            <key> is returned. Keep <source> False to strip source."""
             key = str(key)
             for beliefs in self.agent.bdi_agent.beliefs:
                 if beliefs[0] == key:
                     raw_belief = (
                         str(list(self.agent.bdi_agent.beliefs[beliefs])[0]))
-                    if ')[source' in raw_belief and not pyson_format:
+                    if ')[source' in raw_belief and not source:
                         raw_belief = raw_belief.split(
                             '[')[0].replace('"', '')
                     belief = raw_belief
@@ -150,28 +143,25 @@ class BDIAgent(Agent):
             else:
                 return None
 
-        def get_beliefs(self, pyson_format=False):
-            """Get agent's beliefs.Keep <pyson_format> False to strip pyson
-            formatting."""
+        def get_beliefs(self, source=False):
+            """Get agent's beliefs.Keep <source> False to strip source."""
             belief_list = []
             for beliefs in self.agent.bdi_agent.beliefs:
                 try:
                     raw_belief = (
                         str(list(self.agent.bdi_agent.beliefs[beliefs])[0]))
-                    if ')[source(' in raw_belief and not pyson_format:
+                    if ')[source(' in raw_belief and not source:
                         raw_belief = raw_belief.split('[')[0].replace('"', '')
                     belief_list.append(raw_belief)
                 except IndexError:
                     pass
             return belief_list
 
-        def print_beliefs(self, pyson_format=False):
-            """Print agent's beliefs.Keep <pyson_format> False to strip pyson
-            formatting."""
-            print("PRINTING BELIEFS")
+        def print_beliefs(self, source=False):
+            """Print agent's beliefs.Keep <source> False to strip source."""
             for beliefs in self.agent.bdi_agent.beliefs.values():
                 for belief in beliefs:
-                    if ')[source(' in str(belief) and not pyson_format:
+                    if ')[source(' in str(belief) and not source:
                         belief = str(belief).split('[')[0].replace('"', '')
                     print(belief)
 
@@ -218,13 +208,11 @@ class BDIAgent(Agent):
                         pyson.Literal("source", (pyson.Literal(str(msg.sender)), )))
                     self.agent.bdi_intention_buffer.append((trigger, goal_type,
                                                             tagged_message, intention))
-                    # self.agent.bdi_agent.call(trigger, goal_type,
-                    #                           tagged_message, intention)
                 if self.agent.bdi_intention_buffer:
                     temp_intentions = deque(self.agent.bdi_intention_buffer)
-                    for trigger, goal_type, tagged_message, intention in temp_intentions:
+                    for trigger, goal_type, term, intention in temp_intentions:
                         self.agent.bdi_agent.call(
-                            trigger, goal_type, tagged_message, intention)
+                            trigger, goal_type, term, intention)
                         self.agent.bdi_agent.step()
                         self.agent.bdi_intention_buffer.popleft()
                 else:
@@ -247,5 +235,5 @@ async def parse_literal(msg):
         args = tuple(new_args)
 
     else:
-        args = None
+        args = ''
     return functor, args
