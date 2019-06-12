@@ -3,9 +3,9 @@ tipo(dec).
 !inicio.
 
 +!inicio
-<-
- .print("Iniciando....");
- !obj2.
+ <-
+  .print("Iniciando....");
+  !obj2.
  
  
  +!obj2: tipo(inc)
@@ -18,16 +18,16 @@ tipo(dec).
   
   
 +!obj2: tipo(dec)
-<-
-.print("Decrementando");
-?contador(X);
--+contador(X-1);
-.wait(1000);
-!obj2.
+ <-
+  .print("Decrementando");
+  ?contador(X);
+  -+contador(X-1);
+  .wait(1000);
+  !obj2.
 
 
 +!obj2: not tipo(_)
-<-
-.print("Esperando");
+ <-
+  .print("Esperando");
   .wait(1000);
-   !obj2.
+  !obj2.

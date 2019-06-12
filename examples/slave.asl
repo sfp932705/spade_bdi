@@ -1,13 +1,23 @@
 contador(0).
 
-+incrementar(Inc) <- 
++incrementar(Inc)[source(S)]: .substring("master@localhost",S,R) 
+ <- 
   .print("increasing");
   ?contador(X);
-  -+contador(X+1);
-  -incrementar(_).
+  .print(X);
+  -+contador(X+Inc).
 
-+decrementar(Dec) <- 
++decrementar(Dec)[source(S)]: .substring("master@localhost",S,R) 
+ <- 
   .print("decreasing");
   ?contador(X);
-  -+contador(X-1);
-  -decrementar(_).
+  .print(X);
+  -+contador(X-Dec).
+
+-incrementar(Inc)[source(S)]: .substring("master@localhost",S,R) 
+ <-
+  .print("DELETING incrementar BELIEF from an untell message").
+
+-decrementar(Dec)[source(S)]: .substring("master@localhost",S,R) 
+ <-
+  .print("DELETING decrementar BELIEF from an untell message").
