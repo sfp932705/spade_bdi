@@ -21,7 +21,7 @@
 
 +!obj2: not tipo(_)
  <-
-  .print("Esperando");
+  .print("Finishing");
   .send("slave_1@localhost", untell, incrementar(2));
   .send("slave_2@localhost", untell, incrementar(5));
   .send("slave_1@localhost", untell, decrementar(2));

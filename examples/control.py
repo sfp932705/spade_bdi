@@ -30,7 +30,7 @@ class MasterAgent(BDIAgent):
                     else:
                         self.agent.bdi.set_belief('tipo', 'inc')
                 except Exception as e:
-                    print("No belief 'tipo'.", e)
+                    self.kill()
 
     class Behav4(TimeoutBehaviour):
         async def run(self):

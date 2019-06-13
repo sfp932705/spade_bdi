@@ -4,16 +4,16 @@ import json
 from ast import literal_eval
 from loguru import logger
 from collections import deque
-import pyson
-import pyson.runtime
-import pyson.stdlib
+import agentspeak as asp
+import agentspeak.runtime
+import agentspeak.stdlib
 from spade.behaviour import CyclicBehaviour
 from spade.agent import Agent
 from spade.template import Template
 from spade.message import Message
 
 PERCEPT_TAG = frozenset(
-    [pyson.Literal("source", (pyson.Literal("percept"), ))])
+    [asp.Literal("source", (asp.Literal("percept"), ))])
 
 
 class BDIAgent(Agent):
@@ -47,8 +47,8 @@ class BDIAgent(Agent):
                 self.asl_file = None
 
     def set_env(self):
-        self.bdi_env = pyson.runtime.Environment()
-        self.bdi_actions = pyson.Actions(pyson.stdlib.actions)
+        self.bdi_env = asp.runtime.Environment()
+        self.bdi_actions = asp.Actions(asp.stdlib.actions)
 
     def __init__(self, jid, password, asl=None, *args, **kwargs):
         self.asl_file = asl
@@ -60,14 +60,14 @@ class BDIAgent(Agent):
         def add_actions(self):
             @self.agent.bdi_actions.add(".send", 3)
             def _send(agent, term, intention):
-                receiver = pyson.grounded(term.args[0], intention.scope)
-                ilf = pyson.grounded(term.args[1], intention.scope)
-                if not pyson.is_atom(ilf):
+                receiver = asp.grounded(term.args[0], intention.scope)
+                ilf = asp.grounded(term.args[1], intention.scope)
+                if not asp.is_atom(ilf):
                     return
                 ilf_type = ilf.functor
                 mdata = {"performative": "BDI",
                          "ilf_type": ilf_type, }
-                body = pyson.pyson_str(pyson.freeze(
+                body = asp.asl_str(asp.freeze(
                     term.args[2], intention.scope, {}))
                 msg = Message(to=receiver, body=body, metadata=mdata)
                 self.agent.submit(self.send(msg))
@@ -75,7 +75,7 @@ class BDIAgent(Agent):
 
             @self.agent.bdi_actions.add(".custom_action", 1)
             def _custom_action(agent, term, intention):
-                arg_0 = pyson.grounded(term.args[0], intention.scope)
+                arg_0 = asp.grounded(term.args[0], intention.scope)
                 print(arg_0)
                 yield
 
@@ -83,7 +83,7 @@ class BDIAgent(Agent):
             def _a_function(x):
                 return x**4
 
-            @self.agent.bdi_actions.add_function("literal_function", (pyson.Literal,))
+            @self.agent.bdi_actions.add_function("literal_function", (asp.Literal,))
             def _literal_function(x):
                 return x
 
@@ -92,32 +92,32 @@ class BDIAgent(Agent):
             new_args = ()
             for x in args:
                 if type(x) == str:
-                    new_args += (pyson.Literal(x),)
+                    new_args += (asp.Literal(x),)
                 else:
                     new_args += (x,)
-            term = pyson.Literal(name, tuple(new_args), PERCEPT_TAG)
+            term = asp.Literal(name, tuple(new_args), PERCEPT_TAG)
             found = False
             for belief in list(self.agent.bdi_agent.beliefs[term.literal_group()]):
-                if pyson.unifies(term, belief):
+                if asp.unifies(term, belief):
                     found = True
                 else:
-                    self.agent.bdi_intention_buffer.append((pyson.Trigger.removal, pyson.GoalType.belief, belief,
-                                                            pyson.runtime.Intention()))
+                    self.agent.bdi_intention_buffer.append((asp.Trigger.removal, asp.GoalType.belief, belief,
+                                                            asp.runtime.Intention()))
             if not found:
-                self.agent.bdi_intention_buffer.append((pyson.Trigger.addition, pyson.GoalType.belief, term,
-                                                        pyson.runtime.Intention()))
+                self.agent.bdi_intention_buffer.append((asp.Trigger.addition, asp.GoalType.belief, term,
+                                                        asp.runtime.Intention()))
 
         def remove_belief(self, name, *args):
             """Remove an existing agent's belief."""
             new_args = ()
             for x in args:
                 if type(x) == str:
-                    new_args += (pyson.Literal(x),)
+                    new_args += (asp.Literal(x),)
                 else:
                     new_args += (x,)
-            term = pyson.Literal(name, tuple(new_args), PERCEPT_TAG)
-            self.agent.bdi_intention_buffer.append((pyson.Trigger.removal, pyson.GoalType.belief, term,
-                                                    pyson.runtime.Intention()))
+            term = asp.Literal(name, tuple(new_args), PERCEPT_TAG)
+            self.agent.bdi_intention_buffer.append((asp.Trigger.removal, asp.GoalType.belief, term,
+                                                    asp.runtime.Intention()))
 
         def get_belief(self, key, source=False):
             """Get an agent's existing belief. The first belief matching
@@ -186,26 +186,26 @@ class BDIAgent(Agent):
                     mdata = msg.metadata
                     ilf_type = mdata["ilf_type"]
                     if ilf_type == "tell":
-                        goal_type = pyson.GoalType.belief
-                        trigger = pyson.Trigger.addition
+                        goal_type = asp.GoalType.belief
+                        trigger = asp.Trigger.addition
                     elif ilf_type == "untell":
-                        goal_type = pyson.GoalType.belief
-                        trigger = pyson.Trigger.removal
+                        goal_type = asp.GoalType.belief
+                        trigger = asp.Trigger.removal
                     elif ilf_type == "achieve":
-                        goal_type = pyson.GoalType.achievement
-                        trigger = pyson.Trigger.addition
+                        goal_type = asp.GoalType.achievement
+                        trigger = asp.Trigger.addition
                     else:
-                        raise pyson.PysonError(
+                        raise asp.AslError(
                             "unknown illocutionary force: %s" % ilf_type)
 
-                    intention = pyson.runtime.Intention()
+                    intention = asp.runtime.Intention()
                     functor, args = await parse_literal(msg.body)
 
-                    message = pyson.Literal(functor, args)
-                    message = pyson.freeze(message, intention.scope, {})
+                    message = asp.Literal(functor, args)
+                    message = asp.freeze(message, intention.scope, {})
 
                     tagged_message = message.with_annotation(
-                        pyson.Literal("source", (pyson.Literal(str(msg.sender)), )))
+                        asp.Literal("source", (asp.Literal(str(msg.sender)), )))
                     self.agent.bdi_intention_buffer.append((trigger, goal_type,
                                                             tagged_message, intention))
                 if self.agent.bdi_intention_buffer:
