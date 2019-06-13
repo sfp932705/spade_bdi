@@ -1,6 +1,13 @@
+import argparse
+
 from spade_bdi.bdi import BDIAgent
 
-a = BDIAgent("BasicAgent@localhost", "basicpasswd", "basic.asl")
+parser = argparse.ArgumentParser(description='spade bdi master-server example')
+parser.add_argument('--server', type=str, default="localhost", help='XMPP server address.')
+parser.add_argument('--password', type=str, default="bdipassword", help='XMPP password for the agents.')
+args = parser.parse_args()
+
+a = BDIAgent("BasicAgent@" + args.server, args.password, "basic.asl")
 a.start()
 
 import time

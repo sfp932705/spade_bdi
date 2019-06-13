@@ -3,9 +3,6 @@
 language: python
 python:
   - 3.6
-  - 3.5
-  - 3.4
-  - 2.7
 
 # Command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
 install: pip install -U tox-travis
@@ -17,13 +14,13 @@ script: tox
 # create the Github repo and add it to Travis, run the
 # following command to finish PyPI deployment setup:
 # $ travis encrypt --add deploy.password
-deploy:
-  provider: pypi
-  distributions: sdist bdist_wheel
-  user: sfp932705
-  password:
-    secure: PLEASE_REPLACE_ME
-  on:
-    tags: true
-    repo: sfp932705/spade_bdi
-    python: 3.6
+#deploy:
+#  provider: pypi
+#  distributions: sdist bdist_wheel
+#  user: sfp932705
+#  password:
+#    secure: PLEASE_REPLACE_ME
+#  on:
+#    tags: true
+#    repo: sfp932705/spade_bdi
+#    python: 3.6

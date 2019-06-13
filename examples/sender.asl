@@ -2,6 +2,7 @@
 
 +!start 
  <-
+  ?receiver(X);
   .print("sending a message ...");
-  .send("BDIReceiverAgent@localhost", achieve, hello("Hello World!"));
+  .send(X, achieve, hello("Hello World!"));
   .print("sent a message").

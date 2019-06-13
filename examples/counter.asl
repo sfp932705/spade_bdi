@@ -1,33 +1,33 @@
-contador(8).
-tipo(dec).
-!inicio.
+counter(8).
+type(dec).
+!init.
 
-+!inicio
++!init
  <-
-  .print("Iniciando....");
+  .print("Starting....");
   !obj2.
  
  
- +!obj2: tipo(inc)
+ +!obj2: type(inc)
  <-
-  .print("Incrementando");
-  ?contador(X);
-  -+contador(X+1);
+  .print("Increasing");
+  ?counter(X);
+  -+counter(X+1);
   .wait(1000);
   !obj2.
   
   
-+!obj2: tipo(dec)
++!obj2: type(dec)
  <-
-  .print("Decrementando");
-  ?contador(X);
-  -+contador(X-1);
+  .print("Decreasing");
+  ?counter(X);
+  -+counter(X-1);
   .wait(1000);
   !obj2.
 
 
-+!obj2: not tipo(_)
++!obj2: not type(_)
  <-
-  .print("Esperando");
+  .print("Waiting");
   .wait(1000);
   !obj2.
