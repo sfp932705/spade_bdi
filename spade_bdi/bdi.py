@@ -6,7 +6,7 @@ from loguru import logger
 from collections import deque
 import agentspeak as asp
 import agentspeak.runtime
-import agentspeak.stdlib
+from agentspeak.stdlib import actions as asp_action
 from spade.behaviour import CyclicBehaviour
 from spade.agent import Agent
 from spade.template import Template
@@ -16,7 +16,7 @@ PERCEPT_TAG = frozenset([asp.Literal("source", (asp.Literal("percept"),))])
 
 
 class BDIAgent(Agent):
-    def __init__(self, jid: str, password: str, asl: str, *args, **kwargs):
+    def __init__(self, jid: str, password: str, asl: str, actions=None, *args, **kwargs):
         self.asl_file = asl
         self.bdi_enabled = False
         self.bdi_intention_buffer = deque()
@@ -31,7 +31,10 @@ class BDIAgent(Agent):
         self.add_behaviour(self.BDIBehaviour(), template)
 
         self.bdi_env = asp.runtime.Environment()
-        self.bdi_actions = asp.Actions(asp.stdlib.actions)
+        if isinstance(actions, asp.Actions):
+            self.bdi_actions = actions
+        else:
+            self.bdi_actions = asp.Actions(asp_action)
         self.bdi.add_actions()
         self._load_asl()
 
