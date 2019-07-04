@@ -69,15 +69,18 @@ class BDIAgent(Agent):
         def add_actions(self):
             @self.agent.bdi_actions.add(".send", 3)
             def _send(agent, term, intention):
-                receiver = str(asp.grounded(term.args[0], intention.scope))
+                receivers = asp.grounded(term.args[0], intention.scope)
+                if isinstance(receivers, str):
+                    receivers = (receivers,)
                 ilf = asp.grounded(term.args[1], intention.scope)
                 if not asp.is_atom(ilf):
                     return
                 ilf_type = ilf.functor
                 mdata = {"performative": "BDI", "ilf_type": ilf_type, }
-                body = asp.asl_str(asp.freeze(term.args[2], intention.scope, {}))
-                msg = Message(to=receiver, body=body, metadata=mdata)
-                self.agent.submit(self.send(msg))
+                for receiver in receivers:
+                    body = asp.asl_str(asp.freeze(term.args[2], intention.scope, {}))
+                    msg = Message(to=str(receiver), body=body, metadata=mdata)
+                    self.agent.submit(self.send(msg))
                 yield
 
             @self.agent.bdi_actions.add(".custom_action", 1)
