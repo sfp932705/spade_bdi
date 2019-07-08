@@ -36,7 +36,8 @@ Examples
 --------
 
 basic.py::
-	import argparse
+
+    import argparse
     from spade_bdi.bdi import BDIAgent
 
     parser = argparse.ArgumentParser(description='spade bdi master-server example')
