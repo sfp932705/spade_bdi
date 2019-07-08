@@ -221,15 +221,14 @@ def parse_literal(msg):
         args = msg.split("(")[1]
         args = args.split(")")[0]
         args = literal_eval(args)
-        if not isinstance(args, tuple):
-            args = (args,)
-        new_args = []
-        for arg in args:
+
+        def recursion(arg):
             if isinstance(arg, list):
-                arg = tuple(arg)
-            new_args.append(arg)
-        args = tuple(new_args)
+                return tuple(recursion(i) for i in arg)
+            return arg
+
+        new_args = (recursion(args),)
 
     else:
-        args = ''
-    return functor, args
+        new_args = ''
+    return functor, new_args
