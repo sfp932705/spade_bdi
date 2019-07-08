@@ -3,11 +3,12 @@ History
 =======
 
 
-0.1.2 (2019-07-08)
+0.1.3 (2019-07-08)
 ------------------
 
 * Allow .send to a list of receivers.
 * Allow to receive messages with lists of lists.
+* Fixed readme.
 
 0.1.1 (2019-06-18)
 ------------------
