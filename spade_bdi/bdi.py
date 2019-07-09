@@ -70,7 +70,7 @@ class BDIAgent(Agent):
             @self.agent.bdi_actions.add(".send", 3)
             def _send(agent, term, intention):
                 receivers = asp.grounded(term.args[0], intention.scope)
-                if isinstance(receivers, str):
+                if isinstance(receivers, str) or isinstance(receivers, asp.Literal):
                     receivers = (receivers,)
                 ilf = asp.grounded(term.args[1], intention.scope)
                 if not asp.is_atom(ilf):
