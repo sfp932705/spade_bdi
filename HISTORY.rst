@@ -3,6 +3,12 @@ History
 =======
 
 
+0.1.4 (2019-07-10)
+------------------
+
+* Allow to send messages to JIDs stored as beliefs.
+
+
 0.1.3 (2019-07-08)
 ------------------
 
